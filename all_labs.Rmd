@@ -1,0 +1,329 @@
+---
+title: "Computer Labs"
+# author: 'SID: 510472357'
+date: "University of Sydney | Semester 2 `r format(Sys.time(), '%Y')`"
+output: 
+  html_document:
+    code_folding: show  
+    code_download: true 
+    toc: true 
+    toc_depth: 3
+    toc_float: true 
+    number_section: false 
+    theme:
+      bootswatch: "cosmo"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+# Week 2
+
+## Question 1
+
+**a)** Using `rbinom`, generate 1000 $Binomial(200, 0.3)$ random variables and store them in `X`. Plot a histogram of `X` using `hist`, and overlay it with a normal density curve with appropriate mean and standard deviation using `curve` and `dnorm`.
+
+
+```{r}
+set.seed(4023)
+
+X<-rbinom(1000,200,0.3)
+hist(X, prob=TRUE, main="distribution of binomial(200,0.3)")
+x_mean<-200*0.3
+x_sd<-sqrt(200*0.3*0.7)
+curve(dnorm(x,mean=x_mean, sd=x_sd), xlim=c(0,200), add=T)
+```
+
+**b)** Find $P(45 ≤ X ≤ 55)$ using either pbinom or dbinom.
+
+```{r}
+pbinom(55,200,0.3)-pbinom(44,200,0.3)
+```
+
+
+```{r}
+dbinom(45:55,200,0.3)
+sum(dbinom(45:55,200,0.3))
+```
+
+**c)** Using `pnorm`, compute the same probability with the normal approximation and normal
+approximation with continuity correction. Comment on how close the approximations are.
+
+Normal approximation:
+
+```{r}
+pnorm(55, mean=x_mean, sd=x_sd) - pnorm(45,mean=x_mean, sd=x_sd) 
+```
+
+Normal approximation with continuity correction gives a closer approximation.
+
+```{r}
+pnorm(55.5, mean=x_mean, sd=x_sd) - pnorm(44.5, mean=x_mean, sd=x_sd)
+```
+
+- the normal cdf cannot approximately binom cdf well at the jump points, bc its continuous whereas binom is discrete, but it approximates it very well half-way between these points of the binom cdf
+
+## Question 2
+
+**a)** Generate 1000 Binomial(200, 0.03) random variables (`rbinom`) and 1000 Poisson(6) random variables (`rpois`), store them in `X` and `Y` respectively. Set up a plotting environment with 1 row and 2 columns (`par(mfrow=c(1,2))`), and generate histograms of `X` and `Y`. Comment on the similarity of the two distributions.
+
+```{r}
+set.seed(3023)
+par(mfrow=c(1,2))
+X<-rbinom(1000,200,0.03)
+hist(X, breaks=15, prob=TRUE, xlim=c(0,15), ylim=c(0,0.18), main="Binomial(200,0.03)")
+Y<-rpois(1000,6)
+hist(Y, breaks=15, prob=TRUE, xlim=c(0,15), ylim=c(0,0.18), main="Poisson(6)")
+```
+
+- as long as the mean of the binom is not too close to the end points (as long as theres no major skewness) normal is good approximator
+- otherwise use poisson - better
+
+**b)** Find $P (X ≤ 5)$ with `pbinom` and $P (Y ≤ 5)$ with `ppois`. Compare the two results.
+
+```{r}
+pbinom(5,200,0.03)
+ppois(5,6)
+```
+
+- very close
+
+
+**c)** Approximate $P (X ≤ 5)$ with the normal approximation (`pnorm`). How close is it this time?
+
+```{r}
+pnorm(5,mean=200*0.03,sd=sqrt(200*0.03*0.97))
+```
+
+- not accurate in this case 
+
+## Question 3
+
+**a)** Generate 1000 realisations of the sum of $n$ $(n = 5)$ Unif(0,1) random variables (using `runif`), compute the standardised the sums and store them in `S1`. Repeat for $n = 100$ and store the results in `S2`.
+
+```{r}
+set.seed(3023)
+
+n<-5
+k<-1000
+
+result1<-rep(0,k)
+for (i in 1:k){
+  result1[i]<-sum(runif(n))
+}
+
+S1<-(result1-0.5*n)/sqrt(n*1/12)
+n<-100
+
+result2<-rep(0,k)
+for (i in 1:k){
+  result2[i]<-sum(runif(n))
+}
+
+S2<-(result2-0.5*n)/sqrt(n*1/12)
+```
+
+**b)** Plot histograms of `S1` and `S2`, overlay them with the density curve of standard normal, and place these two plots side by side using `par(mfrow=c(1,2))`. Comment on how close the normal approximation is for the two values of $n$. 
+
+```{r}
+par(mfrow=c(1,2))
+hist(S1, prob=TRUE, ylim=c(0,0.4), xlim=c(-3,3))
+curve(dnorm(x,mean=0, sd=1),add=T)
+hist(S2, prob=TRUE, ylim=c(0,0.4), xlim=c(-3,3))
+curve(dnorm(x,mean=0, sd=1),add=T)
+```
+
+- both n give good approximations
+
+**c)** Repeat (a) and (b) for the sum of lognormal(0,1) distributions (use `rlnorm(n, meanlog = 0, sdlog = 1)`). In this case, E(Xi ) = exp(1/2), Var(Xi ) = (exp(1) − 1) exp(1).
+
+```{r}
+set.seed(3023)
+n<-5
+k<-1000
+result1<-rep(0,k)
+for (i in 1:k){
+  result1[i]<-sum(rlnorm(n, meanlog = 0, sdlog = 1))
+}
+S1=(result1-exp(1/2)*n)/sqrt(n*(exp(1)-1)*exp(1))
+n<-100
+k<-1000
+result2<-rep(0,k)
+for (i in 1:k){
+  result2[i]<-sum(rlnorm(n, meanlog = 0, sdlog = 1))
+}
+S2<-(result2-exp(1/2)*n)/sqrt(n*(exp(1)-1)*exp(1))
+par(mfrow=c(1,2))
+hist(S1, prob=TRUE)
+curve(dnorm(x,mean=0, sd=1),add=T)
+hist(S2, prob=TRUE)
+curve(dnorm(x,mean=0, sd=1),add=T)
+```
+
+
+- In this case, the approximation gets better for larger $n$. Note that lognormal has a heavy tail distribution, so the convergence is slower.
+
+
+Q: how many samples do we need before we can use normal dist to approximate a dist?
+
+Ans: it depends on how "non-normal" the dist is. if perfectly normal, then even very small sample size is sufficient to use normal dist
+
+
+
+
+
+# Week 3
+
+## Question 1
+
+**a)** Generate 100 realisations of the sample variance of 8 independent $N(0,1)$ random variables and store them in `s2`.
+
+```{r}
+set.seed(72357)
+
+s2 <- vector() # initialising vector 
+
+for (i in 1:100) {
+  s2[i] <- # storing the result as the ith element of s2
+    var(rnorm(8, mean = 0, sd = 1)) # generating 8 iid N(0,1) RVs and calculating their variance
+}
+```
+
+
+**b)** Plot the histogram of `(8-1)*s2` and overlay it with the density function of the $\chi^2_7$ distribution (use `dchisq`).
+
+```{r}
+hist((8-1)*s2, prob=TRUE)
+curve(dchisq(x, df = 7), xlim=c(0,50), add=T)
+```
+
+
+**c)** Repeat(a) and (b) with $n = 50$ independent $N(0,1)$ random variables. Overlay the histogram with both the density curve of $\chi^2_{n−1}$ for an appropriate $\nu$ and the density curve of $N (n − 1, 2(n − 1))$ (using two different colours). Comment on the fit. Explain *briefly* why the normal approximation is suitable here.
+
+```{r}
+set.seed(72357)
+
+s2 <- vector() # initialising vector 
+
+for (i in 1:100) {
+  s2[i] <- # storing the result as the ith element of s2
+    var(rnorm(50, mean = 0, sd = 1)) # generating 50 iid N(0,1) RVs and calculating their variance
+}
+
+hist((49)*s2, prob=TRUE)
+curve(dchisq(x, df = 49), xlim=c(0,100), add=T, col = "red", lty=1)
+curve(dnorm(x, mean = 49, sd = (2*49)**0.5), add = T, col = "blue", lty=1)
+legend("topright", legend = c("Chi-squared distribution with df=49", "N(49, 2*49)"),
+       col = c("red", "blue"), lty=1:1, cex=0.8)
+```
+
+The density curve of $N (n − 1, 2(n − 1))$ closely follows the density curve of $\chi^2_{n−1}$, and fits the histogram as well as the density curve of $\chi^2_{n-1}$, hence using normal approximation is suitable here. Note that the $\chi^2$ density curve more closely follows the histogram here than in the previous question, since here we have a greater $n$. 
+
+
+**d)** For $n = 50$, compute $P ((n − 1) \cdot S^2 > 54)$ using both the exact distribution ($\chi^2_\nu$) and the normal approximation. Compare the results.
+
+
+```{r}
+n = 50
+# using exact distribution:
+1 - pchisq(54, df = n-1) 
+
+# using normal approximation:
+1 - pnorm(54, mean = n-1, sd = (2*(n-1))**0.5) 
+```
+
+
+Using the exact distribution and normal approximation yields very similar probabilities. The normal approximation gives a slightly higher value as its peak is slightly more to the right. 
+
+
+## Question 2
+
+**a)** When two random variables $(X, Y )$ follow a bivariate normal distribution, the covariance matrix $\Sigma$ is defined as 
+
+$$\Sigma = \begin{pmatrix}
+\sigma_1^2 & \rho \sigma_1 \sigma_2 \\
+\rho \sigma_1 \sigma_2 & \sigma_2^2
+\end{pmatrix}, $$
+
+where $\rho$ is the correlation, $\sigma_1^2, \sigma_2^2$ are the variances of $X$ and $Y$ respectively. Use `mvrnorm` from the MASS library (use `library(MASS)`) to generate 500 samples from a bivariate normal distribution with $\mu = (\mu_1,\mu_2)$ with $\mu_1 = 1, \mu_2 = 2,$ and 
+
+$$\Sigma = \begin{pmatrix}
+1 & 0.5 \\
+0.5 & 4
+\end{pmatrix}. $$
+
+Store the first column as `x` and the second column as `y`.
+
+
+```{r}
+set.seed(72357)
+library(MASS)
+
+sigma <- matrix(c(1,0.5,0.5,4),2,2) # specifying the covariance matrix
+
+q2a <- mvrnorm(n = 500, mu = c(1,2), Sigma = sigma)
+x <- q2a[,1]
+y <- q2a[,2]
+```
+
+
+**b)** Plot the histogram of `x` and overlay it with the corresponding marginal normal density. Repeat for `y`. (Recall the marginal distribution of $X$ is $N(\mu_1,\sigma_1^2)$.)
+
+```{r}
+hist(x, prob=TRUE)
+curve(dnorm(x, mean = 1, sd = 1), xlim=c(-10,10), add=T)
+```
+
+```{r}
+hist(y, prob=TRUE)
+curve(dnorm(x, mean = 2, sd = 2), xlim=c(-10,10), add=T)
+```
+
+
+**c)** Produce a scatter plot of `x` and `y` (use `plot`). Compute the sample correlation coefficient (use `cor`) and comment on how close it is to the population correlation $\rho$. (First work out $\rho$ in the $\Sigma$ given.) 
+
+```{r}
+plot(x,y,
+     xlab = "x", ylab = "y")
+
+cor(x,y)
+```
+
+Theoretically, $\sigma_1 = 1$ and $\sigma_2 = 2 \Rightarrow$ population correlation coefficient $\rho = 0.25$, which is fairly close to the sample correlation coefficient, 0.296. 
+
+
+
+
+# Week 4
+
+
+# Week 5
+
+
+# Week 6
+
+
+# Week 7
+
+
+# Week 8
+
+
+# Week 9
+
+
+# Week 10
+
+
+# Week 11
+
+
+# Week 12
+
+
+
+# Week 13
+
+
