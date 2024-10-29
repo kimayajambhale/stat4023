@@ -324,13 +324,205 @@ cor(x,y)
 
 Theoretically, $\sigma_1 = 1$ and $\sigma_2 = 2 \Rightarrow$ population correlation coefficient $\rho = 0.25$, which is fairly close to the sample correlation coefficient, 0.296. 
 
+## Question 3
 
+**a)** Generate 100 realisations of the uniform U(0,1) distribution and store it in `u`. Apply the transformation $z = − log (u)$. Verify that $z$ is a sample from an exponential(1) distribution by plot the histogram of $z$ and overlay it with the density of the distribution.
+
+```{r}
+set.seed(3023)
+
+u <- runif(n = 100)
+z <- -1*log(u)
+
+hist(z, freq = FALSE)
+curve(dexp(x, rate = 1), add=T)
+```
+
+**b)** Generate 100 realisations of the minimum of 10 independent exponential(1) random variables. Note the rate parameter in `rexp` is defined as the reciprocal of the expectation (check the density function in the help file `?rexp`).
+
+```{r}
+set.seed(3023)
+
+x_mat <- 
+  rexp(n=100*10, rate = 1) |> matrix(nrow=10, ncol=100)
+
+# we need to take the minimum of each of 10 trials
+y_mat <- apply(x_mat, 
+               2, # applying over columns (1 if row)
+               min)
+```
+
+alternative:
+
+```{r}
+# x_mat <- rexp(n=100*10, rate = 1) |> matrix(ncol = 10, nrow = 100)
+# y_mat <- apply(x_mat,
+#                1,
+#                min)
+```
+
+
+**c)** Plot the histogram and overlay it with the density of exponential(1/10) (`rate=10`) distribution. Comment on the fit.
+
+```{r}
+hist(y_mat, freq = FALSE, main = "minimum of iid exponential")
+curve(dexp(x, rate=10), add = TRUE)
+```
 
 
 # Week 4
 
+## Question 1
+
+**a)** Generate 500 iid Poisson(5) (use `rpois`) random variables and store them in a vector `N`.
+
+```{r}
+N <- rpois(n=500, lambda = 5)
+```
+
+
+**b)** Now for each generated element `n` in `N`, generate 1 random variable following a binomial distribution with $n$ trials and success probabilities 0.20. Store all the generated values into a vector `X`.
+
+```{r}
+X <- rbinom(n=500,
+       size = N, # size of trials (n)
+       prob = 0.2)
+```
+
+**c)** Plot the histogram of `X`. What is the marginal distribution of $X$? Compare the relatively frequency for each value in $X$ versus the pmf of this distribution.
+
+```{r}
+hist(X)
+```
+
+- X has a Poisson(5*0.2) = Poisson(1) distribution 
+
+Frequency of each value in X:
+
+```{r}
+table(X)/500
+```
+
+pmf of Poisson(1):
+
+```{r}
+dpois(min(X):max(X), lambda = 1) |> round(3)
+```
+
+- relative frequency of each outcome is very close to the pmf evaluated by the poisson distribution with rate $\lambda = 1$
+
+## Question 2: Transformation of Random Variables
+
+**a)** Generate 100 random variables from the standard normal distribution, and store them in a vector `z`. Apply the transformation `u <- z^2`. Overlay the histogram of `u` with the density curve of a $\chi^2_1$ distribution (use `dchisq(x, 1)`. Also verify that the $\chi^2_1$ distribution is the same as the Gamma distribution with rate 1/2 and scale 2 (use `dgamma(x, shape = 1/2, scale = 2)`), Comment on the plot.
+
+
+```{r}
+z <- rnorm(n=100)
+u <- z^2
+
+hist(u, freq = FALSE)
+curve(dchisq(x, 1), add=TRUE, col="blue")
+curve(dgamma(x, shape = 1/2, scale = 2), add=TRUE, col="red", lty=2)
+```
+
+- the 3 distributions agree
+
+**b)** Generate 100 random variables from a $t$ distribution with 5 degrees of freedom (use `rt(100,df=5)`). Store them in $t$. Make another vector `f` by `f <- t^2`. Overlay the histogram of `f` with the density curve of a $F_{1,5}$ distribution (use `df(x, df1=1, df2=5)`). Comment on the plot. 
+
+```{r}
+t <- rt(100, df=5)
+f <- t^2
+
+hist(f, freq=FALSE, main="square of t distrib")
+curve(df(x, df1=1, df2=5), add = TRUE)
+```
+
+- the 2 distributions agree
+
+**c)** Generate 100 random variables from a $F_{5,2}$ distribution (use `rf(100, df1=5, df2=2)`). Store them in `y`. Make another vector `w <- 1/y`. Overlay the histogram of `w` with the density curve of a $F_{2,5}$ distribution. Comment on the plot.
+
+```{r}
+set.seed(3023)
+
+y <- rf(100, df1=5, df2=2)
+w <- 1/y
+
+hist(w, freq=F, main="inverse of an F distrib", ylim=c(0,0.8))
+curve(df(x, df1=2, df2=5), add = TRUE)
+```
+
+- the 2 distributions agree
+
+**d)** Generate 100 random variables from a beta(2, 1) distribution (use `rbeta(100, shape1=2, shape2=1)`). Store them in `z`. Make another vector `v <- 2*z/(4*(1-z))`. Overlay the histogram of `v` with the density curve of a $F_{4,2}$ distribution. Comment on the plot.
+
+```{r}
+z <- rbeta(100, shape1 = 2, shape2 = 1)
+v <- 2*z/(4*(1-z))
+
+hist(v, freq=FALSE, ylim=c(0,0.5), main="transformation of beta distribution")
+curve(df(x, df1=4, df2=2), add=TRUE)
+```
+
+- the 2 distributions agree
+
 
 # Week 5
+
+We shall compare three different estimators of a binomial success probability. If $Y ∼ Bin(2, θ)$ then we have
+
+$$P(Y =0)=(1−θ)^2;$$
+
+$$P(Y =1)=2θ(1−θ);$$
+
+$$P(Y =2)=θ^2.$$
+
+If we have an iid sample $Y_1,...,Y_n$ and define $N_0 = \sum_{i=1}^n 1 \{Yi = 0\}$ as the number of 0’s and $N_2 = \sum_{i=1}^n 1 \{Yi = 2\}$ as the number of 2’s, then we also have that
+
+$$N_0 ∼ Bin(n,(1−θ)^2) \text{ and}$$
+
+$$N_2 ∼ Bin(n,θ^2).$$
+
+
+The usual estimator of θ based on an iid sample $Y_1,...,Y_n$ is a function of $\bar{Y} = \frac{1}{n} \sum_{i=1}^n Y_i$.
+
+## Question 1
+
+Determine an unbiased estimator for θ which is a *linear* function of $\bar{Y}$ Call it $\hat{\theta}_1$.
+
+$$Y \sim Bin(2,\theta) \Rightarrow E(Y) = 2\theta$$
+
+$$E(\bar{Y}) = \frac{1}{n} \sum_{i=1}^n E(Y_i) = \frac{1}{n} * n(2\theta) = 2\theta$$
+$\Rightarrow \hat{\theta}_1 = \bar{Y}/2$ is an unbiased estimator of $\theta$
+
+## Question 2
+
+Determine an estimator for θ which is a *nonlinear* function of $N_0$ (hint: use method of moments, i.e. set $N_0$ equal to expectation and solve for θ). Call it $\hat{\theta}_0$. 
+
+$E(N_0) = n(1-\theta)^2,$ setting $N_0 = n(1-\theta)^2$ gives $\hat{\theta}_0 = 1 = \sqrt{\frac{N_0}{n}}$
+
+## Question 3
+
+Determine an estimator for θ which is a *nonlinear* function of N2 (hint: use method of moments, i.e. set $N_2$ equal to expectation and solve for θ). Call it $\hat{\theta}_2$.
+
+(similar)
+
+## Question 4
+
+We shall simulate a sample of $n = 100$ iid $Y_i$’s and compute the values of these three estimators, followed by comparing their mean squared errors, for a fine grid of θ values. 
+
+(full question on sheet)
+
+```{r}
+
+```
+
+
+
+
+
+
+
+
 
 
 # Week 6
