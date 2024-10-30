@@ -850,7 +850,90 @@ gu$d
 
 ## Question 1 - Obtaining the GLRT Statistic
 
+**a)** Obtaining $\hat{\alpha}_0$ numerically
 
+```{r}
+set.seed(3023)
+x = rexp(25, 1)
+```
+
+> **i**
+
+```{r}
+minus.logL <- function(log.alpha, mu, data) {
+  -sum(dgamma(data, shape = exp(log.alpha), scale = mu/exp(log.alpha), log=TRUE))
+}
+
+alpha_vals = c(-1,0,1)
+
+minus.logL(-1, 1, x)
+minus.logL(0, 1, x)
+minus.logL(1, 1, x)
+```
+
+> **ii**
+
+```{r}
+fit <- optim(log(sd(x)), minus.logL, mu=1, data = x, method="BFGS")
+fit
+```
+
+**b)** Obtaining $\hat{\mu}$ and $\hat{\alpha}$
+
+```{r}
+initial_guess <- log(sd(x)*sqrt(mean(x)))
+
+fit <- optim(initial_guess, minus.logL, mu=1, data = x, method="BFGS")
+fit
+```
+
+
+**c)**
+
+Fn to compute the GLRT statistic 
+
+```{r}
+glrt.stat = function(x, mu0) {
+  fit0 <- optim(log(sd(x)), minus.logL, mu=1, data = x, method="BFGS")
+  
+  initial_guess <- log(sd(x)*sqrt(mean(x)))
+  fit1 <- optim(initial_guess, minus.logL, mu=1, data = x, method="BFGS")
+  
+  stat = fit0$value-fit1$value
+  stat
+}
+
+glrt.stat(x,1)
+```
+
+
+## Question 2 - Sampling Distribution of the Statistic under $H_0$
+
+**a)**
+
+```{r, cache=TRUE}
+# WRONG FOR SOME REASON
+
+set.seed(3023)
+
+sim.stats <- 0
+n <- 25
+B <- 10000
+
+for (i in 1:B) {
+  x <- rexp(25, 1)
+  sim.stats[i] <- glrt.stat(x,1)
+}
+
+hist(2*sim.stats, freq = FALSE, n=40)
+curve(dchisq(x, df=1), add = TRUE)
+```
+
+**b)**
+
+```{r}
+
+```
 
 
 # Week 9
