@@ -498,7 +498,7 @@ $\Rightarrow \hat{\theta}_1 = \bar{Y}/2$ is an unbiased estimator of $\theta$
 
 Determine an estimator for θ which is a *nonlinear* function of $N_0$ (hint: use method of moments, i.e. set $N_0$ equal to expectation and solve for θ). Call it $\hat{\theta}_0$. 
 
-$E(N_0) = n(1-\theta)^2,$ setting $N_0 = n(1-\theta)^2$ gives $\hat{\theta}_0 = 1 = \sqrt{\frac{N_0}{n}}$
+$E(N_0) = n(1-\theta)^2,$ setting $N_0 = n(1-\theta)^2$ gives $\hat{\theta}_0 = 1 - \sqrt{\frac{N_0}{n}}$
 
 ## Question 3
 
@@ -506,32 +506,351 @@ Determine an estimator for θ which is a *nonlinear* function of N2 (hint: use m
 
 (similar)
 
+$$\hat{\theta}_2 = \sqrt{\frac{N_2}{n}}$$
+
 ## Question 4
 
 We shall simulate a sample of $n = 100$ iid $Y_i$’s and compute the values of these three estimators, followed by comparing their mean squared errors, for a fine grid of θ values. 
 
 (full question on sheet)
 
-```{r}
+```{r, eval=FALSE}
+# NOT WORKING
 
+th=(1:39)/40 # defining theta values
+
+n = 100 # sample size
+N = 10000 # number of iterations
+
+# MSE0=MSE1=MSE2=0
+
+MSE0=MSE1=MSE2= numeric(length(th))
+
+L = length(th)
+
+for (i in 1:L) {
+  # print(i)
+  th.hat1=th.hat0=th.hat2=0
+  
+  for (j in N) {
+    Y <- rbinom(n, size = 2, p = th[i])
+    th.hat1[j] <- mean(Y)/2
+    
+    N0 = sum(Y==0)
+    N2 = sum(Y==2)
+    
+    th.hat0[j] <- 1 - sqrt(N0/n)
+    th.hat2[j] <- sqrt(N2/n)
+  }
+  
+  MSE0[i] <- mean((th.hat0-th[i])^2)
+  MSE1[i] <- mean((th.hat1-th[i])^2)
+  MSE2[i] <- mean((th.hat2-th[i])^2)
+  
+}
 ```
 
+Plotting
 
+```{r, eval=FALSE}
+yrange=range(c(MSE0,MSE1,MSE2))
 
+plot(th, MSE1, type='l', col='red', ylim=yrange, main = "Empirical MSEs")
+lines(th, MSE0, col="blue")
+```
 
+(see solns for plot)
 
+**e)** Comment on the plots and how they may or may not agree with theory, in particular explain the importance of the final curve added to the plot. If necessary, modify the legend to appropriately indicate this last curve. 
 
+- the variance of any unbiased estimator is no smaller than the CRLB which is the inverse of the variance of the derivative of the log-likelihood wrt the parameter
 
+- the CRLB is attained IFF the parameter is a linear function of the mean-value parameter (of the suff stat) in an exponential family, and this is attained by the corresponding linear function of the suff stat
 
 
 
 # Week 6
 
 
+## Question 4
+
+**In R, generate a random sample of size $n = 50$ that follows a Poisson(1) distribution, using `rpois`. Compute the true value of the parameter $\theta$ and three estimates for $\theta$ on the generated sample.**
+
+```{r}
+set.seed(72357)
+
+q4_sample <- rpois(n = 50, lambda = 1)
+
+# true value of theta:
+theta_true <- exp(-1)
+
+# computing MLE estimator
+x_bar <- mean(q4_sample)
+theta_MLE <- exp(-1*x_bar)
+
+# computing unbiased estimator
+Y <- sum(q4_sample==0)
+theta2 <- Y/50
+
+# computing estimator theta_3, using question 2
+S <- sum(q4_sample)
+theta3 <- (1 - (1/50))^S
+```
+
+The true value of $\theta$ is `r round(theta_true,3)`, and the estimates based on the generated sample are:
+
+- $\hat{\theta}_{MLE} =$ `r round(theta_MLE, 3)`
+- $\hat{\theta}_{2} =$ `r round(theta2, 3)`
+- $\hat{\theta}_{3} =$ `r round(theta3,3)`
+
+
+## Question 5
+
+**Perform a loop to see how the three estimators perform over a range of $\lambda$ values. Following the same basic method as in Week 5 Computer Lab, at each value of `lambda=seq(1, 5, length=40)`, generate `N=5000` Poisson samples of size `n=50` with that $\lambda$ value. Save the corresponding average squared errors for the three estimators.**
+
+```{r}
+set.seed(72357)
+
+lambda_vals <- seq(1, 5, length = 40)
+n <- 50  # sample size
+N <- 5000  # number of simulation iterations
+
+MSE_MLE <- numeric(length(lambda_vals))
+MSE_unbiased <- numeric(length(lambda_vals))
+MSE_theta3 <- numeric(length(lambda_vals))
+
+# looping over each lambda value
+for (i in 1:length(lambda_vals)) {
+  lambda <- lambda_vals[i]
+  # initialising vectors to store squared errors for each estimator
+  sq_errors_MLE <- numeric(N)
+  sq_errors_unbiased <- numeric(N)
+  sq_errors_theta3 <- numeric(N)
+  
+  # inner loop for simulation iterations
+  for (j in 1:N) {
+    # generating random sample
+    sample <- rpois(n, lambda)
+    
+    # computing true theta
+    true_theta <- exp(-lambda)
+    
+    ## (similar to question 4)
+    
+    # MLE estimator
+    X_bar <- mean(sample)
+    theta_MLE <- exp(-X_bar)
+    sq_errors_MLE[j] <- (theta_MLE - true_theta)^2
+    
+    # unbiased estimator
+    Y <- sum(sample == 0)
+    theta2 <- Y / n
+    sq_errors_unbiased[j] <- (theta2 - true_theta)^2
+    
+    # estimator theta3
+    S <- sum(sample)
+    theta3 <- (1 - 1/n)^S
+    sq_errors_theta3[j] <- (theta3 - true_theta)^2
+  }
+  
+  # computing average squared errors for each estimator
+  MSE_MLE[i] <- mean(sq_errors_MLE)
+  MSE_unbiased[i] <- mean(sq_errors_unbiased)
+  MSE_theta3[i] <- mean(sq_errors_theta3)
+}
+```
+
+
+
+## Question 6
+
+**Plot the average squared errors of the three estimators as a function of $\lambda$ on the same plot. Distinguishing these lines by using different colors or line types and adding appropriate legends. Out of the three estimators, which one performs the worst?**
+
+
+```{r}
+# Plot the MSEs
+yrange <- range(c(MSE_MLE, MSE_unbiased, MSE_theta3))
+plot(lambda_vals, MSE_MLE, type = 'l', col = 'orange', ylim = yrange, ylab = 'Average Squared Error', xlab = 'Lambda', main = "Empirical MSEs")
+lines(lambda_vals, MSE_unbiased, col = 'blue')
+lines(lambda_vals, MSE_theta3, col = 'darkgreen')
+legend('topright', legend = c('MLE', 'Unbiased', 'Theta3'), col = c('orange', 'blue', 'darkgreen'), lty = 1) 
+```
+
+Out of the three estimators, the unbiased estimator, $\hat{\theta}_{2}$, performed the worst as it yielded the highest MSE values over the given range of $\lambda \in [1,5].$
+
+
+## Question 7
+
+**Excluding the estimator with the worst performance, plot the *ratio* of the average squared error and the CRLB for the remaining two estimators as a function of $\lambda$ on the same plot. Does either of these two estimators achieve the CRLB for all values of $\lambda$? Which one is a better estimator? Explain *briefly* why this is expected.**
+
+The unbiased estimator ($\hat{\theta}_{2}$) has been excluded. 
+
+```{r}
+set.seed(72357)
+
+# calculating the CRLB for each lambda value
+CRLB <- (1/n) * lambda_vals * exp(-2 * lambda_vals)
+
+# calculating the ratio of MSE to CRLB for the MLE and theta3 estimators
+MSE_to_CRLB_MLE <- MSE_MLE / CRLB
+MSE_to_CRLB_theta3 <- MSE_theta3 / CRLB
+
+plot(lambda_vals, MSE_to_CRLB_MLE, type = 'l', col = 'orange', ylim = range(c(MSE_to_CRLB_MLE, MSE_to_CRLB_theta3)), 
+     ylab = 'Ratio of MSE to CRLB', xlab = 'Lambda', main = 'MSE to CRLB Ratios')
+lines(lambda_vals, MSE_to_CRLB_theta3, col = 'darkgreen')
+legend('topright', legend = c('MLE', 'Theta3'), col = c('orange', 'darkgreen'), lty = 1)
+```
+
+- Neither of these two estimators ($\hat{\theta}_{MLE}$ and $\hat{\theta}_{3}$) achieves the CRLB for all values of lambda because the ratio is not equal to 1 for all values of $\lambda.$
+    
+    * Theoretically, neither $\hat{\theta}_{MLE}$ nor $\hat{\theta}_{3}$ are linear functions of the sufficient statistic $S$, meaning they do not attain the CRLB. 
+
+- $\hat{\theta}_{3}$ is a better estimator as it has a ratio closer to 1 than the MLE, thus it is closer to the CRLB. 
+
+- This is expected because since the Poisson distribution belongs to a full exponential family, any function of the sufficient statistic is the best unbiased estimator of its expected value. In our setting, $S = \sum^n_{i=1} X_i$ is a sufficient statistic for $\lambda,$ and $Y/n$ is an unbiased estimator for $\theta$. Hence, $\hat{\theta}_3 = (1/n)E(Y|S)$ is the best unbiased estimator for $E(\hat{\theta}_3) = (1/n)E(Y) = \theta$.
+
+
 # Week 7
+
+Consider the test of $H_0 : θ = θ_0$ against $H_1: \theta \neq \theta_0$ based on $X \sim f(\cdot ; \gamma_0, \theta)$ (f is gamma with known shape $\gamma_0$ but unknown scale parameter $\theta$)
+
+## Question 1
+
+**a)**
+
+```{r}
+# both are equiv bc gamma with shape 1 is exp
+a = qgamma(0.025, shape=1)
+a = qexp(0.025)
+a
+
+b = qexp(1-0.025)
+b
+```
+
+**b)**
+
+```{r}
+th = (250:1500)/1000 
+
+# a_vals = qgamma(0.025, shape=1/th)
+# b_vals = qgamma(1-0.025, shape=1/th)
+
+power <- pexp(a, 1/th) + 1 - pexp(b, 1/th)
+
+# power_theta = a_vals + b_vals
+
+plot(x=th, y=power, type="l")
+abline(h=0.05, lty=2)
+```
+
+**c)**
+
+> **i**
+
+```{r}
+fn <- function(c, alpha) {
+  c*exp(-1*c) + (log(alpha - 1 + exp(-1*c)))*(alpha - 1 + exp(-1*c))
+}
+```
+
+> **ii**
+
+the use of `eps` helps us stay away from the upper bound, since the function is trying to evaluate log(0)
+
+```{r}
+eps = 1e-5
+uniroot(fn, lower=0, upper = qexp(0.05)-eps, alpha=0.05) # solving eqn to return c
+```
+
+> **iii**
+
+```{r}
+expon.umpu = function(alpha) {
+  eps = 1e-5
+  c <- uniroot(fn, lower=0, upper = qexp(0.05)-eps, alpha=0.05)$root
+  upper.tail = alpha - (1 - exp(-c))
+  d = -log(upper.tail)
+  list(c=c, d=d)
+}
+
+expon.umpu(0.05)
+```
+
+
+**d)**
+
+```{r}
+th=(250:1500)/1000
+power=pexp(a,1/th) + 1-pexp(b,1/th)
+plot(th,power,type="l",main="Testing for an exponential mean")
+       abline(h=.05,lty=2)
+
+
+umpu=expon.umpu(.05)
+umpu.power=pexp(umpu$c,1/th) + 1-pexp(umpu$d,1/th)
+lines(th,umpu.power,col="red")
+legend("top",leg=c("Power of equal-tailed test","Power of UMPU test"),
+        col=c("black","red"),lty=c(1,1))
+```
+
+- The power function of the UMPU test never goes below the 0.05 level, thus it is unbiased.
+
+
+## Question 2
+
+**a)**
+
+```{r}
+gamma.root = function(c, n, alpha) {
+  lower = pgamma(c, shape = n, scale = 1) # cdf at c to give lower tail 
+  d = qgamma(1 - (alpha - lower), shape = n, scale = 1) # finding d given c
+  # LHS of the 2nd condition and returning its diff from alpha
+  pgamma(c, shape = (n + 1), scale = 1) + 1 - pgamma(d, shape = (n + 1), scale = 1) - alpha
+  }
+
+eps = 1e-8
+upper = qgamma(0.05, shape = 5, scale = 1) - eps
+
+uniroot(gamma.root, lower = 0, upper = upper, n = 5, alpha = 0.05)
+```
+
+```{r}
+gamma.umpu = function(alpha,n) {
+    eps=1e-8
+    upper=qgamma(alpha,shape=n,scale=1)-eps
+    c=uniroot(gamma.root,lower=0,upper=upper,n=n,alpha=alpha)$root
+    lower=pgamma(c,shape=n,scale=1)
+    d=qgamma(1-(alpha-lower),shape=n,scale=1)
+    list(c=c,d=d)
+}
+     
+gamma.umpu(.05,5)
+```
+
+
+**b)**
+
+```{r}
+gu=gamma.umpu(.05,5) # critical values
+g.power=pgamma(gu$c,shape=5,scale=th)+1-pgamma(gu$d,shape=5,scale=th) # computing power
+
+plot(th,g.power,type="l",ylim=c(0,1))
+abline(h=.05,lty=2)
+
+gu$c
+gu$d
+```
+
+- reject H_0 if X is outside [c,d]
+- do not reject H_0 if X is within (c,d) 
 
 
 # Week 8
+
+## Question 1 - Obtaining the GLRT Statistic
+
+
 
 
 # Week 9
