@@ -846,7 +846,7 @@ gu$d
 - do not reject H_0 if X is within (c,d) 
 
 
-# Week 8
+# Week 8: GLRT for a Gamma Mean
 
 ## Question 1 - Obtaining the GLRT Statistic
 
@@ -912,7 +912,7 @@ glrt.stat(x,1)
 **a)**
 
 ```{r, cache=TRUE}
-# WRONG FOR SOME REASON
+# WRONG PLOT FOR SOME REASON
 
 set.seed(3023)
 
@@ -936,17 +936,19 @@ curve(dchisq(x, df=1), add = TRUE)
 ```
 
 
-# Week 9
+# Week 9: Two-sided tests for a normal variance
+
+## Question 1
 
 
-# Week 10
+
+# Week 10: Interval estimation of a Poisson mean
 
 
-# Week 11
+# Week 11: Interval estimation of a Binomial success probability
 
 
 # Week 12
-
 
 
 # Week 13
